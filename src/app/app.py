@@ -1,9 +1,16 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import pickle
+import os
 
-chart_data = pd.DataFrame(
-     np.random.randn(20, 3),
-     columns=['a', 'b', 'c'])
 
-st.line_chart(chart_data)
+BASE_PATH = os.path.abspath('.\data')
+
+
+
+with open(os.path.join(BASE_PATH, 'gold', 'rules.pkl')) as fp:
+    rules = pickle.load(fp)
+
+st.write(rules)
+
