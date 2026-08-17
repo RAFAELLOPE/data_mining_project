@@ -2,3 +2,6 @@ data/
 *.pyc
 env/
 *.log
+modelling_env/
+analysis/mlruns
+mlflow.db
