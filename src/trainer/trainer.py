@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import cross_val_score, cross_validate, GridSearchCV
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 import mlflow
+from mlflow.models import infer_signature
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -19,6 +20,7 @@ class Experiment:
         self.experiment_name = config.experiment_name
         self.run_name = config.run_name
         self.mlflow_dir = config.mlflow_dir
+        self.model_name = config.model_name
 
         # Define the hyperparameter search space for GridSearchCV
         self.svd_components = config.svd_component_search_space
@@ -67,32 +69,13 @@ class Experiment:
                 registered_model_name="RandomForestRegressor")
 
     def evaluate(self):
-        current_experiment=dict(mlflow.get_experiment_by_name(self.experiment_name))
-        experiment_id=current_experiment['experiment_id']
-        runs = mlflow.search_runs(
-            experiment_names=[self.experiment_name],
-            order_by=["start_time DESC"],
-        )
+        self.plot_feature_importance()
+        y_pred = self.best_model.predict(self.X_test)
+        r2 = r2_score(y_true=self.y_test, y_pred=y_pred)
+        mse =  mean_squared_error(y_true=self.y_test, y_pred=y_pred)
+        mae = mean_absolute_error(y_true=self.y_test, y_pred=y_pred)
+        return y_pred, r2, mse, mae
 
-        run_id = runs.iloc[0]["run_id"]
-
-        with mlflow.start_run(run_id=run_id):
-            y_pred = self.best_model.predict(self.X_test)
-            r2 = r2_score(y_true=self.y_test, y_pred=y_pred)
-            mse =  mean_squared_error(y_true=self.y_test, y_pred=y_pred)
-            mae = mean_absolute_error(y_true=self.y_test, y_pred=y_pred)
-            self.plot_feature_importance()
-
-            # Log metrics
-            mlflow.log_metric("test_r2", r2)
-            mlflow.log_metric("test_mse", mse)
-            mlflow.log_metric("test_mae", mae)
-
-            # Log Feature importance
-            mlflow.log_artifact(
-                os.path.join(self.out_dir, "feature_importance.png"),
-                artifact_path="feature_importance"
-            )
 
     def plot_feature_importance(self, top_n=5):
         # Feature importance
@@ -123,7 +106,39 @@ class Experiment:
 
     def run(self):
         self.train()
-        self.evaluate()
+        predictions, r2, mse, mae  = self.evaluate()
+
+        signature = infer_signature(
+            self.X_train,
+            predictions)
+        
+        runs = mlflow.search_runs(
+            experiment_names=[self.experiment_name],
+            order_by=["start_time DESC"])
+        
+        run_id = runs.iloc[0]["run_id"]
+        
+        with mlflow.start_run(run_id=run_id):
+            # Log metrics
+            mlflow.log_metric("test_r2", r2)
+            mlflow.log_metric("test_mse", mse)
+            mlflow.log_metric("test_mae", mae)
+        
+            # Log Feature importance
+            mlflow.log_artifact(
+                os.path.join(self.out_dir, "feature_importance.png"),
+                artifact_path="feature_importance"
+            )
+
+            # Log Model parameters
+            mlflow.log_params(self.best_params)
+            
+            # Register model
+            mlflow.sklearn.log_model(
+                self.best_model,
+                signature=signature,
+                artifact_path="model",
+                registered_model_name=self.model_name)
 
 
 

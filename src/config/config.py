@@ -5,6 +5,7 @@ class Config:
   def __init__(self):
     self.experiment_name = "Random_Forest_Regressor"
     self.run_name = "19082024_rf"
+    self.model_name = 'rf_regressor'
     self.file_path = 'C:\\Users\\34616\\Documents\\Cursos\\Data_Mining\\data_mining_project\\data\\gold\\purchases.csv'
     self.mlflow_dir = 'sqlite:///c:/Users/34616/Documents/Cursos/Data_Mining/data_mining_project/data/mlflow.db'
 
