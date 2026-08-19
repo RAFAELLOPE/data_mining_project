@@ -3,10 +3,8 @@ import mlflow
 
 class InferenceAgent:
     def __init__(self, config):
-        self.model_name = config.model_name
-
         # Load the model from the Model Registry
-        model_uri = f"models:/{self.model_name}/Production"
+        model_uri = f"models:/{config.model_name}/Production"
         self.model = mlflow.sklearn.load_model(model_uri)
 
     def inference(self, 
