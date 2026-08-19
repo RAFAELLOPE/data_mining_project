@@ -4,6 +4,7 @@ import mlflow
 class InferenceAgent:
     def __init__(self, config):
         # Load the model from the Model Registry
+        mlflow.set_tracking_uri(config.mlflow_dir)
         model_uri = f"models:/{config.model_name}/Production"
         self.model = mlflow.sklearn.load_model(model_uri)
 

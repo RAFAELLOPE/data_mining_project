@@ -17,5 +17,5 @@ class Config:
     self.rf_estimators_search_space = [10, 50, 100]
     
     self.CV_folds = 5
-    self.test_results_dir = '.C:\\Users\\34616\\Documents\\Cursos\\Data_Mining\\data_mining_project\\data\\gold\\'
+    self.test_results_dir = 'C:\\Users\\34616\\Documents\\Cursos\\Data_Mining\\data_mining_project\\data\\gold\\'
     

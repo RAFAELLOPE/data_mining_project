@@ -1,5 +1,5 @@
 from src.loader.loader import DataLoader
-from src.trainer.trainer import Regressor
+from src.model.model import Regressor
 
 import pandas as pd
 import os
@@ -35,10 +35,10 @@ class Experiment:
 
         self.loader = DataLoader(config)
         self.X_train, self.X_test, self.y_train, self.y_test = self.loader.get_train_test_data()
-        self.model = Regressor().get_model()
+        self.model = Regressor(config).get_model()
 
         # Create a timestamped output folder for experiment artifacts
-        dirname = f'{time.strftime("%Y-%m-%d_%H%M", time.gmtime())}_{self.name}'
+        dirname = f'{time.strftime("%Y-%m-%d_%H%M", time.gmtime())}_{self.experiment_name}'
         self.out_dir = os.path.join(config.test_results_dir, dirname)
         os.makedirs(self.out_dir, exist_ok=True)
 
@@ -62,11 +62,6 @@ class Experiment:
             cv.fit(self.X_train, self.y_train)
             self.best_model = cv.best_estimator_
             self.best_params = cv.best_params_
-
-            mlflow.sklearn.log_model(
-                self.best_model,
-                artifact_path="model",
-                registered_model_name="RandomForestRegressor")
 
     def evaluate(self):
         self.plot_feature_importance()
@@ -132,7 +127,7 @@ class Experiment:
 
             # Log Model parameters
             mlflow.log_params(self.best_params)
-            
+
             # Register model
             mlflow.sklearn.log_model(
                 self.best_model,

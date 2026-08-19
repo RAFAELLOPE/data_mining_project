@@ -6,14 +6,13 @@ class DataLoader:
     def __init__(self, config):
         self.test_size = config.test_size
 
-        df = pd.read_csv(
+        data = pd.read_csv(
             config.file_path
         )
 
-        self.df = df.drop(
+        self.df = data.drop(
             'date',
-            axis=1,
-            inplace=True
+            axis=1
         )
 
     def get_train_test_data(self):
