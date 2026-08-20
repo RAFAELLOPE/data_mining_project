@@ -2,6 +2,7 @@ from src.loader.loader import DataLoader
 from src.model.model import Regressor
 
 import pandas as pd
+import numpy as np
 import os
 import time
 import matplotlib.pyplot as plt
@@ -64,36 +65,38 @@ class Experiment:
             self.best_params = cv.best_params_
 
     def evaluate(self):
-        self.plot_feature_importance()
         y_pred = self.best_model.predict(self.X_test)
+        self.plot_prediction_errors(y_pred=y_pred)
         r2 = r2_score(y_true=self.y_test, y_pred=y_pred)
         mse =  mean_squared_error(y_true=self.y_test, y_pred=y_pred)
         mae = mean_absolute_error(y_true=self.y_test, y_pred=y_pred)
         return y_pred, r2, mse, mae
 
 
-    def plot_feature_importance(self, top_n=5):
+    def plot_prediction_errors(self, y_pred):
         # Feature importance
-        feature_importance = pd.DataFrame({
-            "feature": self.model.feature_names_in_,
-            "importance": self.model.feature_importances_}
-        ).sort_values("importance", ascending=False)
-
-        plot_data = feature_importance.head(top_n)
-        plt.figure(figsize=(10, 6))
-        plt.barh(
-            plot_data["feature"][::-1],
-            plot_data["importance"][::-1]
+        prediction_errors = pd.DataFrame({
+            "sales": self.y_test,
+            "prediction": y_pred}
         )
-        plt.xlabel("Feature importance")
+
+        prediction_errors['MAE'] = np.abs(
+            prediction_errors['sales'] - prediction_errors['prediction']
+        )
+
+        prediction_errors = prediction_errors.sort_values("MAE", ascending=False)
+
+        plt.figure(figsize=(10, 6))
+        prediction_errors['MAE'].hist(bins=100)
+        plt.xlabel("Mean Absolute Error")
         plt.ylabel("Feature")
-        plt.title("Random Forest Feature Importance")
+        plt.title("Random Forest Prediction Errors")
         plt.tight_layout()
 
         plt.savefig(
             os.path.join(
                 self.out_dir,
-                "feature_importance.png"
+                "mae.png"
             ), 
             dpi=150
         )
@@ -121,12 +124,9 @@ class Experiment:
         
             # Log Feature importance
             mlflow.log_artifact(
-                os.path.join(self.out_dir, "feature_importance.png"),
-                artifact_path="feature_importance"
+                os.path.join(self.out_dir, "mae.png"),
+                artifact_path="MAE"
             )
-
-            # Log Model parameters
-            mlflow.log_params(self.best_params)
 
             # Register model
             mlflow.sklearn.log_model(
