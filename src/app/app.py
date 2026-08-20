@@ -40,9 +40,16 @@ if os.path.getsize(fname) > 0:
 
 
 st.set_page_config(layout="wide")
-st.header('Sales Prediction App')
+st.markdown(
+    """
+    <h1 style="color: red;">
+        Sales Prediction App
+    </h1>
+    """,
+    unsafe_allow_html=True
+)
 # Create the top row
-upper_left, upper_right = st.columns(2)
+upper_left, spacer, upper_right = st.columns([2, 0.5, 2])
 
 # Upper-left area
 with upper_left:
@@ -104,14 +111,14 @@ with upper_left:
 
 with upper_right:
     st.subheader("Main Product Rules")
-    caption_html = "<br>".join([str(r) for r in rules[:10]])
+    caption_html = "<br>".join([str(r).split('(')[0] for r in rules[:20]])
 
     st.markdown(f"""
     <style>
     .upper-right {{
         position: fixed;
         top: 60px;
-        left: 20px;
+        left: 60px;
         z-index: 999999;
         background-color: white;
         padding: 10px 15px;
@@ -139,15 +146,26 @@ st.divider()
 
 st.subheader("Sales Evolution")
 
-fig, ax = plt.subplots(1,1,figsize=(20, 5))
+fig, ax = plt.subplots(2,1,figsize=(20, 10))
 sns.lineplot(
     data=df,
     x='date',
     y='previous_sales',
     hue='company_type',
-    ax=ax
+    ax=ax[0]
 )
-plt.grid()
+
+sns.lineplot(
+    data=df,
+    x='date',
+    y='previous_sales',
+    hue='company_employees',
+    ax=ax[1]
+)
+
+ax[0].grid()
+ax[1].grid()
 plt.tight_layout()
 st.pyplot(fig, use_container_width=True, width='stretch')
 
+st.divider()
