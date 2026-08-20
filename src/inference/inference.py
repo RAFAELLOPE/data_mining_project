@@ -26,13 +26,13 @@ class InferenceAgent:
             month = 12
         X = pd.DataFrame(
             {
-                'month': str(month),
-                'productcategory': productcategory,
-                'company_type': company_type,
-                'company_employees': company_employees,
-                'previous_sales': previous_sales,
-                'cpi': cpi,
-                'unemployment_rate': unemployment_rate
+                'month': [str(month)],
+                'productcategory': [productcategory],
+                'company_type': [company_type],
+                'company_employees': [company_employees],
+                'previous_sales': [previous_sales],
+                'cpi': [cpi],
+                'unemployment_rate': [unemployment_rate]
             }
         )
 

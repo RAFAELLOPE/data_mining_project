@@ -6,6 +6,9 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import pickle
+from datetime import datetime
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from src.inference.inference import InferenceAgent
 from src.config.config import Config
@@ -16,7 +19,9 @@ inference_agent = InferenceAgent(config=config)
 
 # Read data to set un numeric parameters
 df = pd.read_csv(config.file_path)
-
+df['date'] = df['date'].apply(
+    lambda x: datetime.strptime(x, '%Y-%m-%d')
+)
 
 # Read rules
 BASE_PATH = os.path.abspath('.\\data')
@@ -33,10 +38,12 @@ if os.path.getsize(fname) > 0:
         rules = unpickler.load()
 
 
-st.set_page_config(layout="wide")
 
+st.set_page_config(layout="wide")
+st.header('Sales Prediction App')
 # Create the top row
 upper_left, upper_right = st.columns(2)
+
 # Upper-left area
 with upper_left:
     st.subheader("Input Parameters")
@@ -82,11 +89,21 @@ with upper_left:
     )
 
     calculate = st.button("Make Prediction")
+    if calculate:
+        pred = inference_agent.inference(
+            month = month,
+            productcategory = productcategory,
+            company_type = company_type,
+            company_employees = company_employees,
+            previous_sales=previous_sales,
+            cpi=cpi,
+            unemployment_rate = unemployment_rate)
+        st.markdown(f'***Predicions: {int(pred)} Sales!***')
 
 
 
 with upper_right:
-    title = "Main Product Rules"
+    st.subheader("Main Product Rules")
     caption_html = "<br>".join([str(r) for r in rules[:10]])
 
     st.markdown(f"""
@@ -114,18 +131,23 @@ with upper_right:
     </style>
 
     <div class="upper-left">
-        <div class="upper-left-title">{title}</div>
         <div>{caption_html}</div>
     </div>
     """, unsafe_allow_html=True)
 
 st.divider()
 
-st.subheader("Lower Section")
+st.subheader("Sales Evolution")
 
-if calculate:
-    st.write('Predicions Made!')
-    # st.write(f"Name: {name}")
-    # st.write(f"Age: {age}")
-    # st.write(f"Category: {category}")
-    # st.write(f"Enabled: {enabled}")
+fig, ax = plt.subplots(1,1,figsize=(20, 5))
+sns.lineplot(
+    data=df,
+    x='date',
+    y='previous_sales',
+    hue='company_type',
+    ax=ax
+)
+plt.grid()
+plt.tight_layout()
+st.pyplot(fig, use_container_width=True, width='stretch')
+
